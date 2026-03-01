@@ -3,29 +3,40 @@ version: '3.8'
 services:
   db:
     image: mysql:8.0
-    container_name: ussp_mysql
+    container_name: ussp_db
     restart: always
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
       - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ussp_db
+      MYSQL_ROOT_PASSWORD: root_pass
     volumes:
       - db_data:/var/lib/mysql
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: ussp_phpmyadmin
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: ussp_server
     ports:
-      - "8080:80"
+      - "8000:8000"
+    volumes:
+      - ./server:/var/www/html
     environment:
-      PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      - DB_HOST=db
     depends_on:
       - db
 
-# Define volumes
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: ussp_client
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules # prevents local node_modules from overwriting container's
+
 volumes:
   db_data:
